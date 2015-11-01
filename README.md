@@ -1,12 +1,10 @@
 ![General Assembly Logo](http://i.imgur.com/ke8USTq.png)
 
 ## Objectives
-* Use ActiveModel Serializer to create the JSON Representation of a Resource.
 * Create a Join Model for a Many-To-Many Relationship.
 * Use Rails has_many :through to implement a Many-To-Many Relationship.
-* Emulate a logged-in user to show a user's movie reviews.
 
-## Code Along: Setup
+## We Do: Setup
 
 **Fork and clone. Then create the DB, migrate and seed the DB.**
 
@@ -16,153 +14,121 @@ rake db:migrate
 rake db:seed
 ```
 
+**Lets review what models and relationships we have at this point.**
+
+Open up `db/schema.rb` and see that:  
+
+*  We have a Movies, Reviews relationship. One Movie may have many Reviews. The Parent is Movie the child is Review. Movie has a collection of Songs.
+	*  Which model holds the `belongs_to`? 
+	*  Which model holds the `has_many`?
+
+![movie review](movie_reviews.png)
+
+* We have a Albums to Songs relationship. One Album has many Songs. The Parent is Album the Child is Song. Album has a collection of Songs.
+	*  Which model holds the `belongs_to`? 
+	*  Which model holds the `has_many`?
+
+![album songs](album_songs.png)
+
+
 **Run the server**
 
 ```
 rails s
 ```
-## Code Along: Use ActiveModel Serializer to create the JSON Representation.
 
-We typically want to have more control over the API. For example, we don't want to show the `created_at` and `updated_at` attributes for each model. Or we may want to create an attribute that doesn't exist on a Model.
+## Data Model
 
-The most common way to do this in a Rails API is to use the [ActiveModel Serializer](https://github.com/rails-api/active_model_serializers/tree/0-9-stable) gem. 
+We are going to create a User model and create a **many to many** relationship between Users and Movies. Another words:
 
-*Note, we are using the version 0.9 of this gem. Not the latest version as there were problems with the latest version.*
+* Each User will have **reviewed** one or more Movies.
+* Each Movie will have been **reviewed** by one or more Users.
 
-ActiveModel Serializer (AMS) will create a class for each resource, Movie and Review. This class will determine the *JSON representation* of the resource.
+![Movie User](movie_user.png)
 
-**Add this to the Gemfile, and bundle install.**
+**(NOTE: This is a conceptual or logical model. It's does NOT reflect the structure of the tables in the DB!!)**
 
-This will get version 0.9.3 of this gem.
+In the DB we will implement this **many to many** relationship by using two **one to many** relationships.
 
-```
-gem 'active_model_serializers'
-```
-
-**Add this to the app/controller/application_controller.rb**
-
-```
-	# Remove the root element, curly braces surrounding the JSON.                                                     
-  def default_serializer_options
-    {
-      root: false
-    }
-  end
-```
-
-### Create the JSON Representation of a Movie
-
-**Add this to the app/serializers/movie_serializer.rb**
-
-```
-class MovieSerializer <	ActiveModel::Serializer
-  # determines which attributes will be shown in the represntation.
-  attributes :id, :name, :rating, :desc, :length
-end
-```
-
-Now look at the Movies JSON and notice that its missing the `created_at` and `updated_at` attributes. *Because they weren't included in the attributes above.*
-
-**Add this to the app/serializers/movie_serializer.rb**
-
-```
-  ...
-  has_many :reviews
-  ...
-```
-
-**Go to `http://localhost:3000/movies` and `http://localhost:3000/movies/2`**
-
-Now when we view movies we'll see all it's reviews embedded in the representation of a movie!
-
-But, we can see ONLY the reviews for a movie by going to *http://localhost:3000/movies/2/reviews*. 
-
-See the difference? We may not need both of these, depends on what the client wants.
-
-### Create the JSON Representation of a Review.
-
-Lets create a representation of a review. Again, we don't want the `created_at` and `updated_at` attributes.
-
-**Add the below to app/serializers/review_serializer.rb**
-
-```
-class ReviewSerializer < ActiveModel::Serializer
-  attributes :name, :comment, :id
-end
-```
-
-Doneso, good.
-
-### Create a virtual attribute only for the JSON Representation.
-
-Add a review_count virtual attribute for movie representation.
-
-```
-class MovieSerializer < ActiveModel::Serializer
-  attributes :id, :name, :rating, :desc, :length, :review_count
-
-  has_many :reviews
-
-  # create a virtual attribute
-  def review_count
-    object.reviews.count
-  end
-end
-```
-
-Notice that we added an attribute, :review_count, and a getter method for that attribute. 
-
-The *object* in the review_count method references a specific movie object.
-
-## Lab 
-
-* Add ActiveModel Serializers for the Album and Song resources. Remove the `created_at` and `updated_at` attributes.
-
-* Add a virtual attribute, num_of_songs, to the Album representation using AMS.
-
-* Add a virtual attribute, price, to the Album model. The price of the album will be 50 percent of the price of all the album songs.
+* A **one to many** relationship between a Movies and its reviews.
+* A **one to many** relationship between a User and their reviews.
 
 
-## Code Along: Create a User 
+![movie review user](movie_review_user.png)
 
-Now we want to create a User model. This user will be the person that creates the movie review. 
+We are going to create a **JOIN TABLE** out of the current **reviews** table. Notice this will have two foriegn keys. A foreign key for the User, `user_id`, and a foreign key for the Movie, `movie_id`.
 
-We'll see later how all reviews must be created by a user.
 
-#### Create a User model
+## We Do: Create the Users-Movies Relationship.
 
-```
-rails g model User name email
-```
+1. First we'll create a User model, and it's users DB table. 
+2. Then we'll remove the name column from the reviews table. 
+3. Add the foreign key for the user's table, `user_id`, to the reviews table.
+4. Add the `has_many` and `belongs_to` Rails/ActiveRecord methods to the User and Review models to create a one to many relationship.
+5. Populate the DB by addding seed data for Users, Reviews and Movies.
+6. Allow Users to find Movies they have reviewed.
+7. Allow Movies to find which Users have created reviews.
+
+
+#### 1. Create a User model
 
 This will generate a User model and migration.
 
-#### Create a JOIN model/table 
+```bash
+$ rails g model User name email
+$ rake db:migrate
+```
+* Inspect the `schema.rb`.
+* Inspect using the `rails console`
+* Inspect the DB.
+
+#### 2. Remove the name column from the reviews table
+
+We don't need the `name` of the user that created the review because we'll have a relationship to the User that created the review.
+
+```bash
+$ rails g migration RemoveNameFromReviews name:string
+$ rake db:migrate
+```
+
+* Inspect the `schema.rb`.
+* Inspect the DB.
+
+
+#### 3. Make reviews a JOIN model/table
+
+Add the foreign key for the user's table, `user_id`, to the reviews table.
 
 Each user may have many reviews. *This is a one to many relationship*.
 
-*We already had a one to many relationship.* A movie may have many reviews.
+Each movie may have many reviews. *We already had this one to many relationship.*
 
 Now, we want to create a **many to many relationship** between Movies and Users. **A user may review many movies** and a **movie may have been reviewed by many users**.
+
+![Movie User](movie_user.png)
+
+(Figure: Conceptual/Logical Data Model of Movies and Users)
+
+The reviews table will become a **JOIN** model. It will **JOIN** movies and users **because it has a foreign keys to both tables.**
+
+![movie review user](movie_review_user.png)
+
+(Figure: Physical DB Model of movies, reviews and users table.)
+
 
 **Create a migration that will add a foreign key, user_id, to the reviews table.**
 
 ```
-rails d migration MakeReviewsAJoinTable
+$ rails g migration AddUserRefToReviews user:references 
+$ rake db:migrate
 ```
 
-**In the migration generated.**
+**View the migration generated.**
 
 ```ruby
-class MakeReviewsAJoinTable < ActiveRecord::Migration
-  def up
-    add_column :reviews, :user_id, :integer
-    remove_column :reviews, :name
-  end
-
-  def down
-    add_column :reviews, :name, :string
-    remove_column :reviews, :name
+class AddUserRefToReviews < ActiveRecord::Migration
+  def change
+    add_reference :reviews, :user, index: true, foreign_key: true
   end
 end
 
@@ -170,21 +136,36 @@ end
 
 This will create a user_id column in the reviews table that will be used as a **foreign key** to the users table.
 
-Remove the name column from the reviews table. *We no longer need the name because we have a user.*.
+* Check the reviews table in the `db/schema.rb`.
+* Check the reviews table in psql.
 
-*Notice the up and down methods. These will be used for running a migration, up, and rolling back a migration, down.*
+```bash
+$ rails db
+# \d reviews
+...
+Foreign-key constraints:                                                                                 
+    "fk_rails_6ad75a4852" FOREIGN KEY (movie_id) REFERENCES movies(id)                                   
+    "fk_rails_74a66bd6c5" FOREIGN KEY (user_id) REFERENCES users(id)
+```
 
-#### Create a has many relationship from the User to the Review model.
+See the foreign keys in the reviews table for movies and users. Yes, this reviews table now **JOINS** users to movies.
 
-**Add this to the User model.**
+The database is setup to **JOIN** Movies and Users. Next, we need to add the appropriate Rails macros/methods to each Model to implement this relationship.
+
+#### 4. Create Rails Associations from User to Review.
+
+
+##### Create a has many relationship from the User to the Review model.
+
+Add this to the User model.
 
 ```ruby
 has_many :reviews
 ```
 
-#### Create a belongs to relationship from the Review to the User model.
+##### Create a belongs to relationship from the Review to the User model.
 
-**Add this to the Review model**
+dd this to the Review model
 
 ```ruby
 belongs_to :user
@@ -192,7 +173,7 @@ belongs_to :user
 ```
 
 
-#### Update the seed file
+#### 5. Update the seed file
 
 ```ruby
 User.destroy_all
@@ -234,18 +215,20 @@ meg = User.find_by_name('Meg')
 meg.reviews
 ```
 
-## Lab
+## You Do
+
+We will be creating a many to many association between Musicians and Albums. But, first you must create a Musician model and relate it to a Song model.
 
 * Create an Musician Model that has a name and age.
 * A Musician may have played, or contributed to, many songs.
 * Implement a one to many relationship between Musician and Song.
 
 
-## Code Along: Has Many Through
+#### 6. Allow Users to find Movies they have reviewed with `has_many through: ..`
 
-#### Find the movies a user has reviewed.
+Find the movies a user has reviewed.
 
-Now that we have a JOIN table/model we can go **through** it to get the movies a user has created a review for. 
+Now that we have a JOIN table/model, reviews, we can go **through** it to get the movies a user has created a review for. 
 
 ```ruby
 class User ...
@@ -274,7 +257,7 @@ Notice the SQL that the `tom.movies` and `joanne.movies` generates and executes.
  SELECT "movies".* FROM "movies" INNER JOIN "reviews" ON "movies"."id" = "reviews"."movie_id" WHERE "reviews"."user_id" = $1
 ```
 
-#### Find the users that have reviewed a movie.
+#### 7. Allow Movies to find which Users have created reviews.
 
 Now, let's see who's reviewed a specific movie.
 
@@ -311,66 +294,13 @@ The `m1.users` returns an array of all the users that have reviewed the movie.
 >movie_reviewers.map{ |reviewer| reviewer.name }
 >```
 
-## Lab
+## You Do
 * Create a many to many relationship between Musician and Album.
  
 This will all use to see the albums a musician has played on. 
 
 And we should see the musicians that have played on an album.
 
-
-## Code Along: JSON API
-
-**Change the review serializer to get it's name from the user that created the review.*
-
-Remember we removed the name attribute from the Review model.
-
-```
-  def name
-    object.user.name
-  end
-```
-
-#### Emulate an authenticated user.
-
-When you add login, authentication, you'll typically determine the current user by calling a current_user method in the ApplicationController. 
-
-We don't have authentication in this app yet. But, we'll emulate it by creating a current_user method and hard coding a User.
-
-**In the app/controllers/applicaiton_controller.rb**
-
-```
-def current_user
-   @current_user ||=  User.find_by_name 'Meg'
-end
-```
-
-**Change the Movies Controller to use this current_user method**
-
-```
- # GET /movies                                                                                                     
-  def index
-    # all the movies                                                                                                
-    if current_user
-      @movies = current_user.movies.all
-    else
-      @movies = Movie.all
-    end
-
-    render json: @movies
-  end
-
-  # GET /movies/:id                                                                                                 
-  def show
-    # find one Movie by id                                                                                          
-    if current_user
-      @movie = current_user.movies.find(params[:id])
-    else
-      @movie = Movie.find(params[:id])
-    end
-    render json: @movie
-  end
-```
 
 ## References
 * [Active Model Serializer (AMS) ](https://github.com/rails-api/active_model_serializers/tree/0-9-stable)
