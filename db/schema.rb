@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20151103154424) do
+ActiveRecord::Schema.define(version: 20151103163505) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -43,16 +43,25 @@ ActiveRecord::Schema.define(version: 20151103154424) do
   add_index "reviews", ["movie_id"], name: "index_reviews_on_movie_id", using: :btree
   add_index "reviews", ["user_id"], name: "index_reviews_on_user_id", using: :btree
 
+  create_table "song_writers", force: :cascade do |t|
+    t.string   "name"
+    t.string   "gender"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "songs", force: :cascade do |t|
     t.string   "title"
     t.integer  "duration"
     t.decimal  "price"
     t.integer  "album_id"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at",     null: false
+    t.datetime "updated_at",     null: false
+    t.integer  "song_writer_id"
   end
 
   add_index "songs", ["album_id"], name: "index_songs_on_album_id", using: :btree
+  add_index "songs", ["song_writer_id"], name: "index_songs_on_song_writer_id", using: :btree
 
   create_table "users", force: :cascade do |t|
     t.string   "name"
@@ -64,4 +73,5 @@ ActiveRecord::Schema.define(version: 20151103154424) do
   add_foreign_key "reviews", "movies"
   add_foreign_key "reviews", "users"
   add_foreign_key "songs", "albums"
+  add_foreign_key "songs", "song_writers"
 end

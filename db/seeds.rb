@@ -1,6 +1,6 @@
-User.delete_all
 Review.delete_all
 Movie.delete_all
+User.delete_all
 
 tom  = User.create!(name: 'Tom')
 joanne = User.create!(name: 'Joanne')
@@ -23,18 +23,23 @@ puts "Created three Movies"
 
 Song.delete_all
 Album.delete_all
+SongWriter.delete_all
+
+kurt = SongWriter.create!(name: 'Kurt Cobain', gender: 'm')
+dave = SongWriter.create!(name: 'Dave Krohl', gender: 'm')
 
 ###### Nevermind #######
-teen_spirit = Song.create!(title: 'Teen Spirit', price: 1.49, duration: 301)
-lithium = Song.create!(title: 'Lithium', price: 1.99, duration: 237)
+teen_spirit = Song.create!(title: 'Teen Spirit', price: 1.49, duration: 301, song_writer: kurt)
+lithium = Song.create!(title: 'Lithium', price: 1.99, duration: 237, song_writer: dave)
 
 nevermind = Album.create!(title: 'Nevermind', year: 1991)
 nevermind.songs << teen_spirit
 nevermind.songs << lithium
 
+beck  = SongWriter.create!(name: 'Beck', gender: 'm')
 ###### Sea Change #######
-golden_age = Song.create!(title: 'Golden Age', price: 1.00, duration: 273)
-lost_cause = Song.create!(title: 'Lost Cause', price: 1.99, duration: 227)
+golden_age = Song.create!(title: 'Golden Age', price: 1.00, duration: 273, song_writer: beck)
+lost_cause = Song.create!(title: 'Lost Cause', price: 1.99, duration: 227, song_writer: beck)
 
 sea_change = Album.create!(title: 'Sea Change', year: 2002)
 sea_change.songs << golden_age

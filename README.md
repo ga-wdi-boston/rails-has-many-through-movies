@@ -217,11 +217,16 @@ meg.reviews
 
 ## You Do
 
-We will be creating a many to many association between Musicians and Albums. But, first you must create a Musician model and relate it to a Song model.
+We will, **eventually, NOT YET** be creating a many to many association between SongWriters and Albums. 
 
-* Create an Musician Model that has a name and age.
-* A Musician may have played, or contributed to, many songs.
-* Implement a one to many relationship between Musician and Song.
+But, first you must create a SongWriter model and relate it to a Song model. **Note: Each Song may ONLY have one SongWriter**.
+
+* Create an SongWriter Model that has a name and gender.
+* A SongWriter may have written many songs.
+* Implement a one to many relationship between SongWriter and Song.
+* Check that each SongWriter can have many songs in the rails console.
+* Confirm this relationship in the Rails DB.
+* Create seed data for each Song's writer.
 
 
 #### 6. Allow Users to find Movies they have reviewed with `has_many through: ..`
