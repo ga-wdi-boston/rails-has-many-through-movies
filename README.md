@@ -300,11 +300,13 @@ The `m1.users` returns an array of all the users that have reviewed the movie.
 >```
 
 ## You Do
-* Create a many to many relationship between Musician and Album.
+* Create a many to many relationship between SongWriter and Album.
  
-This will all use to see the albums a musician has played on. 
+Then check that we can view all an Album's song writers. 
 
-And we should see the musicians that have played on an album.
+AND
+
+Check to see that we can view all a song writer's albums.
 
 
 ## References
